@@ -30,47 +30,58 @@ before or after the set of elements, respectively (defaults to after):
 */
 (function($) {
     $.readless = function(data, minElements) {
-        if (typeof data === "object" && data instanceof jQuery) {
+        if (typeof data === 'object' && data instanceof jQuery) {
             if (! jqueryObjectIsInDOM(data)) {
-                build(data);
+                console.log('You must pass a location for the toggle')
+                build(data)
             }
             else {
-                init(data);
+                init(data)
             }
         }
-        else if (typeof data === "string") {
-            build(checkForInsertDirection(data));
+        else if (typeof data === 'string') {
+            build(getInsertLocation(data))
         }
 
-        return data;
-    };
+        return data
+    }
 
     $.fn.readless = function() {
-        $.readless(this, 0);
-    };
+        $.readless(this, 0)
+    }
 
     var insertBefore = false,
-        insertAfter = true;
+        insertAfter = false,
+        toggleElement = $('<a class="read-more" data-more="less">Read less...</a>')
+            .css('cursor', 'pointer')
 
     function init(data) {
-        console.log('init', data);
+        console.log('init', data)
     }
 
     function build(data) {
-        console.log('build', data);
+        console.log('build', data)
+        if (insertBefore) {
+            data.before(toggleElement)
+        }
     }
 
     function jqueryObjectIsInDOM(obj) {
-        return (obj.closest('html').length > 0);
+        return (obj.closest('html').length > 0)
     }
 
-    function checkForInsertDirection(string) {
-        var insertSelector = new RegExp( /(.*) ([-+])$/ );
-        var matches = string.match(insertSelector);
+    function getInsertLocation(string) {
+        // Match the entire string, and optionally the last two characters if
+        // they are a space followed by - or +. This means matches[1] will
+        // always be the selector string.
+        var insertSelector = new RegExp(/(.*?) ?([-+])?$/)
+        var matches = string.match(insertSelector)
         if (matches[2] === '-') {
-            insertBefore = true;
-            insertAfter = false;
+            insertBefore = true
         }
-        return $(matches[1]);
+        else if (matches[2] === '+') {
+            insertAfter = true
+        }
+        return $(matches[1])
     }
-})(jQuery);
+})(jQuery)
