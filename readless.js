@@ -40,7 +40,10 @@ before or after the set of elements, respectively (defaults to after):
             }
         }
         else if (typeof data === 'string') {
-            build(getInsertLocation(data))
+            data = $(getInsertLocation(data))
+            if (! jqueryObjectIsInDOM(data))
+                console.log('You must pass a location for the toggle')
+            build(data)
         }
 
         return data
@@ -61,9 +64,10 @@ before or after the set of elements, respectively (defaults to after):
 
     function build(data) {
         console.log('build', data)
-        if (insertBefore) {
+        if (insertBefore)
             data.before(toggleElement)
-        }
+        else
+            data.after(toggleElement)
     }
 
     function jqueryObjectIsInDOM(obj) {
@@ -82,6 +86,6 @@ before or after the set of elements, respectively (defaults to after):
         else if (matches[2] === '+') {
             insertAfter = true
         }
-        return $(matches[1])
+        return matches[1]
     }
 })(jQuery)
