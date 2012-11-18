@@ -29,45 +29,79 @@ before or after the set of elements, respectively (defaults to after):
 
 */
 (function($) {
-    $.readless = function(data, minElements) {
-        if (typeof data === 'object' && data instanceof jQuery) {
-            if (! jqueryObjectIsInDOM(data)) {
-                console.log('You must pass a location for the toggle')
-                build(data)
-            }
-            else {
-                init(data)
-            }
-        }
-        else if (typeof data === 'string') {
-            data = $(getInsertLocation(data))
-            if (! jqueryObjectIsInDOM(data))
-                console.log('You must pass a location for the toggle')
-            build(data)
-        }
-
-        return data
-    }
-
-    $.fn.readless = function() {
-        $.readless(this, 0)
-    }
 
     var insertBefore = false,
         insertAfter = false,
+        mustBuild = false,
         toggleElement = $('<a class="read-more" data-more="less">Read less...</a>')
             .css('cursor', 'pointer')
 
-    function init(data) {
-        console.log('init', data)
+    $.readless = function(data, toggle) {
+        // Test toggle
+        if (toggle === undefined) {
+            console.log('toggle undefined, setting to', toggleElement)
+            toggle = toggleElement
+            mustBuild = true
+        }
+        else {
+            toggleElement = toggle
+            if (! (toggleElement instanceof jQuery)) {
+                toggleElement = $(toggleElement)
+            }
+            if (! jqueryObjectIsInDOM(toggleElement)) {
+                mustBuild = true
+            }
+        }
+
+        // Test data and run
+        if (data instanceof jQuery) {
+            console.log('jQuery object passed')
+            // data must contain some elements
+            if (! data.length > 0) {
+                throw new Error('readless(): No elements to work on')
+                return
+            }
+        }
+        else if (typeof data === 'string' || data instanceof String) {
+            console.log('selector string passed')
+            data = $(getInsertLocation(data))
+            if (! data.length > 0) {
+                throw new Error('readless(): No elements to work on')
+                return
+            }
+            mustBuild = true
+        }
+        else {
+            throw new Error('readless() requires a jQuery object or selector string')
+            return
+        }
+
+        if (mustBuild) build(data, toggle)
+
+        init(data, toggle)
+
+        // @TESTING
+        return data
     }
 
-    function build(data) {
-        console.log('build', data)
-        if (insertBefore)
+    $.fn.readless = function(toggle) {
+        $.readless(this, toggle)
+    }
+
+    function init(data, toggle) {
+        console.log('init', data, toggle)
+    }
+
+    function build(data, toggle) {
+        console.log('build', data, toggle)
+        if (insertBefore) {
+            console.log('inserting before')
             data.before(toggleElement)
-        else
+        }
+        else {
+            console.log('inserting after')
             data.after(toggleElement)
+        }
     }
 
     function jqueryObjectIsInDOM(obj) {
