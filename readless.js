@@ -10,35 +10,60 @@
         toggle: $('<a href="#" class="readless-toggle readless-open" />'),
         toggleTextOpen: 'Read less &laquo;',
         toggleTextClosed: 'Read more &raquo;',
+        toggleClasses: 'readless-toggle',
         animation: {
-            properties: {},
-            options: {
+            showProperties: {},
+            hideProperties: {
+                height: 0
+            },
+            hideOptions: {
                 duration: 300,
-                easing: 'swing'
+                easing: 'swing',
+                complete: function() {
+                    $(this).css('overflow', 'hidden')
+                }
+            },
+            showOptions: {
+                duration: 300,
+                easing: 'swing',
+                complete: function() {
+                    $(this).css('overflow', 'visible')
+                }
             }
         }
     }
 
-    $.readless.content = {}
+    // We cache all the content that readless finds to speed up click events.
+    // The key is a unique ID (an integer index) stored in the data-readless
+    // attribute, with the value being a jQuery object of the content.
+    var readlessContent = {}
 
     $.fn.readless = function(data) {
-        // this == toggle. We assume everything is setup, and we are just
+        // 'this' is the toggle. We assume everything is setup, and we are just
         // applying the click handler to the toggle already in the DOM.
         // However, we can accept $.readless.settings properties.
         if (data) {
             $.extend(true, $.readless.settings, data)
         }
+        // Initialise.
+        init(this)
+        // And now add the click handler: the main man.
+        this.click(clickHandler)
+    }
+
+    // Setup toggle classes and cache all readless content.
+    function init($toggle) {
         // Add classes.
-        this.addClass('readless-toggle readless-open')
+        $.readless.settings.toggleClasses += ' readless-open'
+        $toggle.addClass($.readless.settings.toggleClasses)
         // Cache all the content to be hidden.
-        this.each(function(index) {
-            var content = findContentToHide(this)
+        $toggle.each(function(index) {
+            var content = findContentToHide($(this))
             // Add a unique identifer to this toggle.
             setContentUID(this, index)
             // Key by the index saved in the data attribute.
-            $.readless.content[index] = content
+            readlessContent[index] = content
         })
-        this.click(clickHandler)
     }
 
     function clickHandler(e) {
@@ -55,9 +80,10 @@
         toggleStatus(this)
     }
 
-    function findContentToHide(el) {
-        $el = $(el)
+    function findContentToHide($el) {
         var content = $el.nextAll()
+        // If there aren't any next siblings, go up one level and look there.
+        // This is called recursively until next siblings are found.
         if (content.length === 0) {
             content = findContentToHide($el.parent())
         }
@@ -77,10 +103,30 @@
     }
 
     function hide(uid) {
-        $.readless.content[uid].slideUp()
+        var content = readlessContent[uid]
+        var anim = $.readless.settings.animation
+        // Save the height as data on each element.
+        content.each(function() {
+            $this = $(this)
+            var height = $this.outerHeight()
+            $this.data('originalHeight', height)
+        })
+        // Animate the set of elements, all to the same properties.
+        content.animate(anim.hideProperties, anim.hideOptions)
     }
 
     function show(uid) {
-        $.readless.content[uid].slideDown()
+        var content = readlessContent[uid]
+        var anim = $.readless.settings.animation
+        // Animate each element individually to use their own height.
+        content.each(function() {
+            $this = $(this)
+            // Override height with the element's saved height.
+            $.extend(anim.showProperties, {
+                height: $this.data('originalHeight')
+            })
+            // Animate this element.
+            $this.animate(anim.showProperties, anim.showOptions)
+        })
     }
 })(jQuery)
