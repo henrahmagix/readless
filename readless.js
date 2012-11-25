@@ -7,7 +7,7 @@
     $.readless.settings = {
         location: null,
         prepend: false,
-        toggle: $('<a href="#" class="readless-toggle readless-open" />'),
+        toggles: $('<a href="#" class="readless-default" />'),
         toggleTextOpen: 'Read less &laquo;',
         toggleTextClosed: 'Read more &raquo;',
         toggleClasses: 'readless-toggle',
@@ -45,25 +45,27 @@
         if (data) {
             $.extend(true, $.readless.settings, data)
         }
+        $.readless.settings.toggles = this
         // Initialise.
-        init(this)
-        // And now add the click handler: the main man.
-        this.click(clickHandler)
+        init()
     }
 
     // Setup toggle classes and cache all readless content.
-    function init($toggle) {
+    function init() {
+        var $toggles = $.readless.settings.toggles
         // Add classes.
         $.readless.settings.toggleClasses += ' readless-open'
-        $toggle.addClass($.readless.settings.toggleClasses)
+        $toggles.addClass($.readless.settings.toggleClasses)
         // Cache all the content to be hidden.
-        $toggle.each(function(index) {
+        $toggles.each(function(index) {
             var content = findContentToHide($(this))
             // Add a unique identifer to this toggle.
             setContentUID(this, index)
             // Key by the index saved in the data attribute.
             readlessContent[index] = content
         })
+        // And now add the click handler: the main man.
+        $toggles.click(clickHandler)
     }
 
     function clickHandler(e) {
