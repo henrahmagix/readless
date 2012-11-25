@@ -4,8 +4,20 @@ body {
   font-weight: normal;
 }
 
-.title, .subtitle {
+.title, .subtitle, .button {
   text-align: center;
+}
+
+.button {
+  background-color: #dd2255;
+  color: white;
+  display: block;
+  font-size: 16px;
+  line-height: 16px;
+  margin: 0 auto;
+  padding: 10px;
+  text-decoration: none;
+  width: 100px;
 }
 
 article {
