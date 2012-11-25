@@ -67,7 +67,6 @@
         })
         // And now add the click handler: the main man.
         $toggles.click(clickHandler)
-        console.log($.readless.settings)
     }
 
     // This is the action function called whenever a toggle is clicked.
