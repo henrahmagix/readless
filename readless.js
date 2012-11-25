@@ -45,39 +45,41 @@
         if (data) {
             $.extend(true, $.readless.settings, data)
         }
-        $.readless.settings.toggles = this
+        // Add current toggles to settings.
+        setToggles(this)
         // Initialise.
         init()
     }
 
     // Setup toggle classes and cache all readless content.
     function init() {
-        var $toggles = $.readless.settings.toggles
+        var $toggles = getToggles()
         // Add classes.
-        $.readless.settings.toggleClasses += ' readless-open'
-        $toggles.addClass($.readless.settings.toggleClasses)
+        setToggleClasses('readless-open')
+        $toggles.addClass(getToggleClasses())
         // Cache all the content to be hidden.
         $toggles.each(function(index) {
             var content = findContentToHide($(this))
             // Add a unique identifer to this toggle.
             setContentUID(this, index)
             // Key by the index saved in the data attribute.
-            readlessContent[index] = content
+            setCachedContent(index, content)
         })
         // And now add the click handler: the main man.
         $toggles.click(clickHandler)
     }
 
+    // This is the action function called whenever a toggle is clicked.
     function clickHandler(e) {
         // Stop the usual action on this event.
         e.preventDefault()
         // Do we show or hide?
-        var contentUID = getContentUID(this)
+        var uid = getContentUID(this)
         if ($(this).hasClass('readless-open')) {
-            hide(contentUID)
+            hide(uid)
         }
         else {
-            show(contentUID)
+            show(uid)
         }
         toggleStatus(this)
     }
@@ -96,39 +98,139 @@
         $(toggle).toggleClass('readless-open readless-closed')
     }
 
-    function getContentUID(toggle) {
-        return $(toggle).attr('data-readless')
-    }
-
-    function setContentUID(toggle, index) {
-        $(toggle).attr('data-readless', index)
-    }
+    /* Show and hide functions */
 
     function hide(uid) {
-        var content = readlessContent[uid]
-        var anim = $.readless.settings.animation
+        var content = getCachedContent(uid)
+        var animProperties = getAnimationProperties('hide')
+        var animOptions = getAnimationOptions('hide')
         // Save the height as data on each element.
         content.each(function() {
             $this = $(this)
             var height = $this.outerHeight()
-            $this.data('originalHeight', height)
+            saveHeight($this, height)
         })
         // Animate the set of elements, all to the same properties.
-        content.animate(anim.hideProperties, anim.hideOptions)
+        content.animate(animProperties, animOptions)
     }
 
     function show(uid) {
-        var content = readlessContent[uid]
-        var anim = $.readless.settings.animation
+        var content = getCachedContent(uid)
+        var animProperties = getAnimationProperties('show')
+        var animOptions = getAnimationOptions('show')
         // Animate each element individually to use their own height.
         content.each(function() {
             $this = $(this)
             // Override height with the element's saved height.
-            $.extend(anim.showProperties, {
-                height: $this.data('originalHeight')
+            $.extend(animProperties, {
+                height: getHeight($this)
             })
             // Animate this element.
-            $this.animate(anim.showProperties, anim.showOptions)
+            $this.animate(animProperties, animOptions)
         })
+    }
+
+    /* Getters and setters */
+
+    // Whether to prepend or append toggles not already in the DOM.
+    function prepend(bool) {
+        if (typeof bool == 'boolean') {
+            $.readless.settings.prepend = bool
+        }
+        return $.readless.settings.prepend
+    }
+    function getHeight($el) {
+        return $el.data('originalHeight')
+    }
+    function saveHeight($el, height) {
+        $el.data('originalHeight', height)
+    }
+
+    // Content unique identifer: the data-readless attribute.
+    function getContentUID(toggle) {
+        return $(toggle).attr('data-readless')
+    }
+    function setContentUID(toggle, index) {
+        $(toggle).attr('data-readless', index)
+    }
+
+    // Cached content.
+    function getCachedContent(uid) {
+        return readlessContent[uid]
+    }
+    function setCachedContent(uid, content) {
+        readlessContent[uid] = content
+    }
+
+    // Toggle elements.
+    function getToggles() {
+        return $.readless.settings.toggles
+    }
+    function setToggles($toggles) {
+        $.readless.settings.toggles = $toggles
+    }
+
+    // Toggle text
+    function getToggleText(type) {
+        if (type === 'open') return $.readless.settings.toggleTextOpen
+        else if (type === 'closed') return $.readless.settings.toggleTextClosed
+        return ''
+    }
+    function setToggleText(text, type) {
+        if (type) {
+            if (type === 'open') $.readless.settings.toggleTextOpen = text
+            if (type === 'closed') $.readless.settings.toggleTextClosed = text
+        }
+        else {
+            $.readless.settings.toggleTextOpen = text
+            $.readless.settings.toggleTextClosed = text
+        }
+    }
+
+    // Toggle classes
+    function getToggleClasses() {
+        return $.readless.settings.toggleClasses
+    }
+    function setToggleClasses(classes, override) {
+        if (override) {
+            $.readless.settings.toggleClasses = classes
+        }
+        else {
+            $.readless.settings.toggleClasses += ' ' + classes
+        }
+    }
+
+    // Animation properties
+    function getAnimationProperties(type) {
+        if (type === 'hide') return $.readless.settings.animation.hideProperties
+        if (type === 'show') return $.readless.settings.animation.showProperties
+        return {}
+    }
+    function setAnimationProperties(properties, type) {
+        if (type) {
+            if (type === 'hide') $.readless.settings.animation.hideProperties = properties
+            if (type === 'show') $.readless.settings.animation.showProperties = properties
+        }
+        else {
+            $.readless.settings.animation.hideProperties = properties
+            $.readless.settings.animation.showProperties = properties
+        }
+    }
+
+    // Animation options
+    function getAnimationOptions(type) {
+        if (type === 'hide') return $.readless.settings.animation.hideOptions
+        if (type === 'show') return $.readless.settings.animation.showOptions
+        return {}
+    }
+    function setAnimationOptions(options, type) {
+        if (type) {
+            if (type === 'hide') $.readless.settings.animation.hideOptions = options
+            if (type === 'show') $.readless.settings.animation.showOptions = options
+        }
+        else {
+            $.readless.settings.animation.hideOptions = options
+            $.readless.settings.animation.showOptions = options
+        }
     }
 })(jQuery)
