@@ -5,5 +5,6 @@ jQuery(document).ready(function($) {
     }
     $('.go').click(function() {
         $('.readless').readless()
+        console.log('readless applied')
     })
 });
