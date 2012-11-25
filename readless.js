@@ -10,28 +10,10 @@ Use Readless like so:
 Readless will find all the content that follows it in the DOM (within its
 parent), wrap it, and slide it away. Clicking .my-toggle will reveal the
 content, and continuously toggle it every click thereafter.
-
-If you don't have a toggle already in the DOM, give Readless one and it will
-insert it for you and set everything up. Be sure to pass it what you want to
-show when your content is hidden:
-
-    jQuery.readless(jQuery('<p class="revealer">Read more...</p>'))
-
-Or you can give Readless just a CSS selector of the location where you would
-like the toggle, and it will do the rest:
-
-    jQuery.readless('section article p:first-of-type')
-
-Ending the selector with '-' or '+' tells Readless to insert the toggle
-before or after the set of elements, respectively (defaults to after):
-
-    jQuery.readless('section article p:nth-of-type(2) -')
-
 */
 (function($) {
 
-    var insertBefore = false,
-        insertAfter = false,
+    var prepend = false,
         mustBuild = false,
         toggleElement = $('<a class="read-more" data-more="less">Read less...</a>')
             .css('cursor', 'pointer')
@@ -84,24 +66,79 @@ before or after the set of elements, respectively (defaults to after):
         return data
     }
 
-    $.fn.readless = function(toggle) {
-        $.readless(this, toggle)
-    }
-
-    function init(data, toggle) {
-        console.log('init', data, toggle)
-    }
-
-    function build(data, toggle) {
-        console.log('build', data, toggle)
-        if (insertBefore) {
-            console.log('inserting before')
-            data.before(toggleElement)
+    $.readless = function(data) {
+        if (typeof data === 'string' || data instanceof String) {
+            data = getInsertLocation(data)
+            $.readless.settings.location = $(data)
         }
         else {
-            console.log('inserting after')
-            data.after(toggleElement)
+            $.extend($.readless.settings, data)
         }
+        addToggle()
+        init()
+    }
+
+    $.fn.readless = function() {
+        console.log('this is the toggle', this)
+    }
+
+    function addToggle() {
+        var locations = $.readless.settings.locations
+        var toggle = $.readless.settings.toggle
+        console.log('addToggle', locations, toggle)
+        locations.each(function() {
+            toggle = toggle.clone()
+            if (prepend) {
+                console.log('inserting before')
+                toggle.insertBefore(this)
+            }
+            else {
+                console.log('inserting after')
+                toggle.insertAfter(this)
+            }
+        }
+    }
+
+    function init() {
+        var toggle = $.readless.settings.toggle
+        console.log('init', locations, toggle)
+        locations.each(function() {
+            toggle = toggle.clone()
+            if (prepend) {
+                console.log('inserting before')
+                toggle.insertBefore(this)
+            }
+            else {
+                console.log('inserting after')
+                toggle.insertAfter(this)
+            }
+            toggle.attr('data-more', 'more')
+                .nextAll()
+                .wrapAll('<div data-more="collapsed" />')
+                .end()
+            var wrapper = toggle.next('[data-more]')
+            if (wrapper.length === 0) wrapper = toggle.closest('[data-more]')
+            height = wrapper.outerHeight()
+            console.log('wrapper height', height)
+            toggle.click(function() {
+                    // console.log(wrapper.length, wrapper)
+                    if ($(this).attr('data-more') === 'more') {
+                        $(this).attr('data-more', 'less')
+                        wrapper.attr('data-more', 'expanded')
+                            .animate({
+                                'height': height
+                            })
+                    }
+                    else {
+                        $(this).attr('data-more', 'more')
+                        wrapper.attr('data-more', 'collapsed')
+                            .animate({
+                                'height': '0'
+                            })
+                    }
+                })
+            toggle.siblings('[data-more]').animate({'height': '0'})
+        })
     }
 
     function jqueryObjectIsInDOM(obj) {
@@ -115,10 +152,7 @@ before or after the set of elements, respectively (defaults to after):
         var insertSelector = new RegExp(/(.*?) ?([-+])?$/)
         var matches = string.match(insertSelector)
         if (matches[2] === '-') {
-            insertBefore = true
-        }
-        else if (matches[2] === '+') {
-            insertAfter = true
+            prepend = true
         }
         return matches[1]
     }
